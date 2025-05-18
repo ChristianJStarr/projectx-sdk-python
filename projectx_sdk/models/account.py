@@ -2,8 +2,7 @@
 
 from typing import List
 
-from projectx_sdk.models import BaseModel
-from projectx_sdk.models.base import BaseResponse
+from projectx_sdk.models.base import BaseModel, BaseResponse
 
 
 class Account(BaseModel):

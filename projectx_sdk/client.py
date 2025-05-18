@@ -1,7 +1,7 @@
 """Main client for ProjectX Gateway API."""
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import requests
 
@@ -217,27 +217,32 @@ class ProjectXClient:
 
             # Parse the response
             try:
-                data = response.json()
+                json_data = response.json()
             except ValueError:
                 raise RequestError(f"Invalid JSON response: {response.text}")
 
+            # Defensive check: ensure we got a dictionary (handles None case for mypy)
+            if json_data is None:
+                raise ProjectXError("Received null response from API")
+
+            # Safe to cast now that we've checked
+            response_data: Dict[str, Any] = cast(Dict[str, Any], json_data)
+
             # Check for API-level errors
-            if not data.get("success", True):
-                # Handle response data that might be None
-                if data is None:
-                    error_code = 0
-                    error_message = "Unknown error"
-                else:
-                    error_code = data.get("errorCode", 0)
-                    error_message = data.get("errorMessage", "Unknown error")
-                
-                raise ProjectXError(
-                    f"API error {error_code}: {error_message}", 
-                    error_code=error_code, 
-                    response=data
+            success = response_data.get("success", True)  # type: ignore[union-attr]
+            if not success:
+                error_code = response_data.get("errorCode", 0)  # type: ignore[union-attr]
+                err_msg = response_data.get(  # type: ignore[union-attr]
+                    "errorMessage", "Unknown error"
                 )
 
-            return data  # type: ignore
+                raise ProjectXError(
+                    f"API error {error_code}: {err_msg}",
+                    error_code=error_code,
+                    response=response_data,
+                )
+
+            return response_data
 
         except requests.RequestException as e:
             raise RequestError(f"Request failed: {str(e)}")
