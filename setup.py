@@ -43,11 +43,11 @@ setup(
     description="Python SDK for the ProjectX Gateway API",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/projectx/projectx-sdk-python",
+    url="https://github.com/ChristianJStarr/projectx-sdk-python",
     project_urls={
-        "Bug Tracker": "https://github.com/projectx/projectx-sdk-python/issues",
+        "Bug Tracker": "https://github.com/ChristianJStarr/projectx-sdk-python/issues",
         "Documentation": "https://projectx-sdk-python.readthedocs.io/",
-        "Source Code": "https://github.com/projectx/projectx-sdk-python",
+        "Source Code": "https://github.com/ChristianJStarr/projectx-sdk-python",
     },
     packages=find_packages(exclude=["tests", "tests.*", "examples", "examples.*"]),
     classifiers=[
