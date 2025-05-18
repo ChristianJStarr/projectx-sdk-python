@@ -40,7 +40,12 @@ def auth_token():
     Returns:
         str: A mock JWT token.
     """
-    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QgVXNlciIsImlhdCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    # JWT token split across lines to avoid line length limit
+    return (
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+        "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QgVXNlciIsImlhdCI6MTUxNjIzOTAyMn0."
+        "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    )
 
 
 @pytest.fixture
@@ -56,12 +61,7 @@ def mock_api_key_auth(mock_responses, api_base_url, auth_token):
     Returns:
         dict: A dictionary with the mock auth response.
     """
-    auth_response = {
-        "token": auth_token,
-        "success": True,
-        "errorCode": 0,
-        "errorMessage": None
-    }
+    auth_response = {"token": auth_token, "success": True, "errorCode": 0, "errorMessage": None}
 
     # Mock the login endpoint
     mock_responses.add(

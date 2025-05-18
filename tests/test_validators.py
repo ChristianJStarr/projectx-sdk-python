@@ -1,9 +1,10 @@
-"""Tests for the validation utilities."""
+"""Tests for validator functions."""
 
 import pytest
 from pydantic import BaseModel
 
 from projectx_sdk.utils.validators import (
+    ValidationError,
     validate_contract_id_format,
     validate_int_range,
     validate_model,
@@ -51,8 +52,8 @@ class TestValidators:
 
         # Test with None
         with pytest.raises(ValueError) as excinfo:
-            validate_int_range(None, "value", 0, 10)
-        assert "value must not be None" in str(excinfo.value)
+            validate_int_range(None, "value", 0, 10)  # type: ignore
+        assert "value cannot be None" in str(excinfo.value)
 
     def test_validate_string_not_empty(self):
         """Test validating non-empty strings."""
@@ -97,12 +98,11 @@ class TestValidators:
 
         # Test with None
         with pytest.raises(ValueError) as excinfo:
-            validate_contract_id_format(None)
-        assert "must not be None" in str(excinfo.value)
+            validate_contract_id_format(None)  # type: ignore
+        assert "Contract ID cannot be None or empty" in str(excinfo.value)
 
     def test_validate_model(self):
         """Test validating model conversion."""
-
         # Create a test model
         class TestModel(BaseModel):
             id: int
@@ -129,13 +129,13 @@ class TestValidators:
         with pytest.raises(ValidationError) as excinfo:
             # Explicitly cast None to string for mypy
             validate_contract_id_format(None)  # type: ignore
-            
+
         assert "Contract ID cannot be None or empty" in str(excinfo.value)
 
     def test_validate_int_range_none(self):
         """Test validating a None value for int range."""
         with pytest.raises(ValidationError) as excinfo:
             # Explicitly cast None to int for mypy
-            validate_int_range(None, 1, 10, "test_field")  # type: ignore
-            
+            validate_int_range(None, "test_field", 1, 10)  # type: ignore
+
         assert "test_field cannot be None" in str(excinfo.value)

@@ -5,11 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from projectx_sdk import ProjectXClient
-from projectx_sdk.exceptions import (
-    AuthenticationError,
-    ProjectXError,
-    ResourceNotFoundError,
-)
+from projectx_sdk.exceptions import AuthenticationError, ProjectXError, ResourceNotFoundError
 
 
 class TestProjectXClient:

@@ -1,7 +1,6 @@
 """Tests for the authentication module."""
 
 from datetime import datetime, timedelta
-from unittest.mock import Mock
 
 import pytest
 
@@ -221,11 +220,11 @@ class TestAuthenticator:
 
         # Mock the validate_token method with a spy
         validate_called = [False]  # Use a list to be mutable in the inner function
-        
+
         def spy_validate_token():
             validate_called[0] = True
             return True
-            
+
         auth.validate_token = spy_validate_token
 
         # Get the header - should trigger a token validation
