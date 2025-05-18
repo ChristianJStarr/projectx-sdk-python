@@ -2,7 +2,7 @@
 
 from typing import List
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from projectx_sdk.models.base import BaseResponse
 

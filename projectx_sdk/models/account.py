@@ -1,6 +1,6 @@
 """Account models for the ProjectX Gateway API."""
 
-from typing import List, Optional
+from typing import List
 
 from projectx_sdk.models import BaseModel
 from projectx_sdk.models.base import BaseResponse
@@ -62,7 +62,7 @@ class Account(BaseModel):
 
     def __repr__(self):
         """
-        String representation of the account.
+        Return string representation of the account.
 
         Returns:
             str: String representation

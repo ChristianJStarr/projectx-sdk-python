@@ -2,13 +2,6 @@
 
 from abc import ABC
 
-from projectx_sdk.endpoints.account import AccountService
-from projectx_sdk.endpoints.contract import ContractService
-from projectx_sdk.endpoints.history import HistoryService, TimeUnit
-from projectx_sdk.endpoints.order import OrderService
-from projectx_sdk.endpoints.position import PositionService
-from projectx_sdk.endpoints.trade import TradeService
-
 
 class BaseService(ABC):
     """
@@ -27,7 +20,16 @@ class BaseService(ABC):
         self._client = client
 
 
+# Import service classes after BaseService is defined to avoid circular imports
+from projectx_sdk.endpoints.account import AccountService  # noqa: E402
+from projectx_sdk.endpoints.contract import ContractService  # noqa: E402
+from projectx_sdk.endpoints.history import HistoryService, TimeUnit  # noqa: E402
+from projectx_sdk.endpoints.order import OrderService  # noqa: E402
+from projectx_sdk.endpoints.position import PositionService  # noqa: E402
+from projectx_sdk.endpoints.trade import TradeService  # noqa: E402
+
 __all__ = [
+    "BaseService",
     "AccountService",
     "ContractService",
     "HistoryService",

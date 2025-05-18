@@ -66,7 +66,10 @@ class RealTimeClient:
         Returns:
             True if both user and market connections are active
         """
-        return self._user_connection.is_connected() and self._market_connection.is_connected()  # type: ignore
+        # Cast the result to bool to satisfy mypy
+        user_connected = bool(self._user_connection.is_connected())
+        market_connected = bool(self._market_connection.is_connected())
+        return user_connected and market_connected
 
     def reconnect_subscriptions(self):
         """

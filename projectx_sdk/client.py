@@ -223,10 +223,18 @@ class ProjectXClient:
 
             # Check for API-level errors
             if not data.get("success", True):
-                error_code = data.get("errorCode", 0) if data else 0  # type: ignore
-                error_message = data.get("errorMessage", "Unknown error") if data else "Unknown error"  # type: ignore
+                # Handle response data that might be None
+                if data is None:
+                    error_code = 0
+                    error_message = "Unknown error"
+                else:
+                    error_code = data.get("errorCode", 0)
+                    error_message = data.get("errorMessage", "Unknown error")
+                
                 raise ProjectXError(
-                    f"API error {error_code}: {error_message}", error_code=error_code, response=data
+                    f"API error {error_code}: {error_message}", 
+                    error_code=error_code, 
+                    response=data
                 )
 
             return data  # type: ignore
