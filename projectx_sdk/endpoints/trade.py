@@ -1,5 +1,7 @@
+"""Service module for trade-related API endpoints."""
+
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from projectx_sdk.endpoints import BaseService
 from projectx_sdk.models.trade import Trade, TradeSearchResponse
@@ -27,6 +29,6 @@ class TradeService(BaseService):
         if end_timestamp:
             data["endTimestamp"] = end_timestamp.isoformat()
 
-        response = self._client.post("Trade/search", json=data)
+        response: Dict[str, Any] = self._client.post("Trade/search", json=data)
         search_response = TradeSearchResponse.model_validate(response)
-        return search_response.trades
+        return search_response.trades  # type: ignore

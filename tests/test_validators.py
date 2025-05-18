@@ -103,6 +103,7 @@ class TestValidators:
 
     def test_validate_model(self):
         """Test validating model conversion."""
+
         # Create a test model
         class TestModel(BaseModel):
             id: int
@@ -125,7 +126,7 @@ class TestValidators:
         assert "Invalid TestModel data" in str(excinfo.value)
 
     def test_validate_contract_id_format_invalid_none(self):
-        """Test validating a None contract ID."""
+        """Test validating a None contract ID."""  # noqa: D202
         with pytest.raises(ValidationError) as excinfo:
             # Explicitly cast None to string for mypy
             validate_contract_id_format(None)  # type: ignore
@@ -133,7 +134,7 @@ class TestValidators:
         assert "Contract ID cannot be None or empty" in str(excinfo.value)
 
     def test_validate_int_range_none(self):
-        """Test validating a None value for int range."""
+        """Test validating a None value for int range."""  # noqa: D202
         with pytest.raises(ValidationError) as excinfo:
             # Explicitly cast None to int for mypy
             validate_int_range(None, "test_field", 1, 10)  # type: ignore

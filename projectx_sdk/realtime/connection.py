@@ -213,7 +213,8 @@ class SignalRConnection:
         Args:
             hub_url (str): The WebSocket hub URL
             access_token (str): JWT authentication token
-            connection_callback (callable, optional): Callback to invoke when connection is established or reconnected
+            connection_callback (callable, optional): Callback to invoke when connection is
+                established or reconnected
         """
         self.hub_url = hub_url
         self.access_token = access_token

@@ -1,9 +1,9 @@
 """User hub implementation for the ProjectX Gateway API."""
 
 import logging
-from typing import Callable, Dict, List, Optional, Set, Union
+from typing import Callable, Dict, List, Optional, Set
 
-from projectx_sdk.realtime.connection import HubConnection, SignalRConnection
+from projectx_sdk.realtime.connection import SignalRConnection
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class UserHub:
             self.hub_url = f"{base_hub_url}{self.hub_path}"
 
             # Initialize connection but don't start yet
-            self._connection = None
+            self._connection: Optional[SignalRConnection] = None  # type: ignore
             self._is_connected = False
             self._owns_connection = True
 

@@ -1,9 +1,5 @@
 """Tests for the model classes."""
 
-from datetime import datetime
-
-import pytest
-
 from projectx_sdk.models.account import Account
 
 

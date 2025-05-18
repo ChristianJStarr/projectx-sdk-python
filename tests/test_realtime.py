@@ -1,6 +1,6 @@
 """Tests for the real-time functionality."""
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 from projectx_sdk.realtime import RealtimeService
 from projectx_sdk.realtime.user_hub import UserHub

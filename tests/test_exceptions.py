@@ -1,6 +1,5 @@
 """Tests for the exceptions module."""
 
-import pytest
 from requests import Response
 
 from projectx_sdk.exceptions import (

@@ -1,3 +1,5 @@
+"""Service module for order-related API endpoints."""
+
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
@@ -37,9 +39,9 @@ class OrderService(BaseService):
         if end_timestamp:
             data["endTimestamp"] = end_timestamp.isoformat()
 
-        response = self._client.post("Order/search", json=data)
+        response: Dict[str, Any] = self._client.post("Order/search", json=data)
         search_response = OrderSearchResponse.model_validate(response)
-        return search_response.orders
+        return search_response.orders  # type: ignore
 
     def search_open(self, account_id: int) -> List[Order]:
         """
@@ -53,9 +55,9 @@ class OrderService(BaseService):
         """
         data = {"accountId": account_id}
 
-        response = self._client.post("Order/searchOpen", json=data)
+        response: Dict[str, Any] = self._client.post("Order/searchOpen", json=data)
         search_response = OrderSearchResponse.model_validate(response)
-        return search_response.orders
+        return search_response.orders  # type: ignore
 
     def place(
         self,
@@ -107,9 +109,9 @@ class OrderService(BaseService):
             "linkedOrderId": linked_order_id,
         }
 
-        response = self._client.post("Order/place", json=data)
+        response: Dict[str, Any] = self._client.post("Order/place", json=data)
         placement_response = OrderPlacementResponse.model_validate(response)
-        return placement_response.order_id
+        return placement_response.order_id  # type: ignore
 
     def cancel(self, account_id: int, order_id: int) -> bool:
         """
@@ -124,9 +126,9 @@ class OrderService(BaseService):
         """
         data = {"accountId": account_id, "orderId": order_id}
 
-        response = self._client.post("Order/cancel", json=data)
+        response: Dict[str, Any] = self._client.post("Order/cancel", json=data)
         cancellation_response = OrderCancellationResponse.model_validate(response)
-        return cancellation_response.success
+        return cancellation_response.success  # type: ignore
 
     def modify(
         self,
@@ -151,7 +153,7 @@ class OrderService(BaseService):
         Returns:
             True if modification was successful, False otherwise
         """
-        data = {"accountId": account_id, "orderId": order_id}
+        data: Dict[str, Any] = {"accountId": account_id, "orderId": order_id}
 
         # Only include fields that are being modified
         if size is not None:
@@ -163,6 +165,6 @@ class OrderService(BaseService):
         if trail_price is not None:
             data["trailPrice"] = trail_price
 
-        response = self._client.post("Order/modify", json=data)
+        response: Dict[str, Any] = self._client.post("Order/modify", json=data)
         modification_response = OrderModificationResponse.model_validate(response)
-        return modification_response.success
+        return modification_response.success  # type: ignore

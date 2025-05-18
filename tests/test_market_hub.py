@@ -1,8 +1,6 @@
 """Tests for the MarketHub class."""
 
-from unittest.mock import Mock, patch
-
-import pytest
+from unittest.mock import Mock
 
 from projectx_sdk.realtime.market_hub import MarketHub
 

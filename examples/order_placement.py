@@ -13,7 +13,7 @@ ENVIRONMENT = os.environ.get("PROJECTX_ENVIRONMENT", "demo")
 
 
 def place_order():
-    """Example of placing and managing an order."""
+    """Place and manage an order using the ProjectX SDK."""
 
     # Initialize the client
     client = ProjectXClient(username=USERNAME, api_key=API_KEY, environment=ENVIRONMENT)
@@ -41,7 +41,7 @@ def place_order():
     print("\nAvailable contracts:")
     for i, contract in enumerate(contracts[:5]):  # Show first 5 matches
         print(
-            f"{i+1}. {contract.name} - {contract.description} (Tick Size: {contract.tick_size}, Tick Value: {contract.tick_value})"
+            f"{i+1}. {contract.name} - {contract.description} (Tick Size: {contract.tick_size}, Tick Value: {contract.tick_value})"  # noqa: E501
         )
 
     # Select a contract
@@ -126,7 +126,7 @@ def place_order():
         order_id = client.orders.place(
             account_id=account.id,
             contract_id=contract.id,
-            type=order_type,
+            order_type=order_type,
             side=side,
             size=size,
             limit_price=limit_price,

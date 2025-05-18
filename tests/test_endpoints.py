@@ -1,7 +1,6 @@
 """Tests for the endpoint service classes."""
 
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
 
 import pytest
 

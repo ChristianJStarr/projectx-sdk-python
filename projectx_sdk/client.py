@@ -118,7 +118,7 @@ class ProjectXClient:
         self.trades = TradeService(self)
 
         # Real-time client (lazy-initialized)
-        self._realtime = None
+        self._realtime: Optional[RealTimeClient] = None
 
     @property
     def realtime(self) -> RealTimeClient:
@@ -223,13 +223,13 @@ class ProjectXClient:
 
             # Check for API-level errors
             if not data.get("success", True):
-                error_code = data.get("errorCode", 0)
-                error_message = data.get("errorMessage", "Unknown error")
+                error_code = data.get("errorCode", 0) if data else 0  # type: ignore
+                error_message = data.get("errorMessage", "Unknown error") if data else "Unknown error"  # type: ignore
                 raise ProjectXError(
                     f"API error {error_code}: {error_message}", error_code=error_code, response=data
                 )
 
-            return data
+            return data  # type: ignore
 
         except requests.RequestException as e:
             raise RequestError(f"Request failed: {str(e)}")

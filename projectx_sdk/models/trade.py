@@ -1,3 +1,5 @@
+"""Data models for trade-related API responses."""
+
 from datetime import datetime
 from typing import List, Optional
 

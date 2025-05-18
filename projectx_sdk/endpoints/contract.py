@@ -1,3 +1,5 @@
+"""Service module for contract-related API endpoints."""
+
 from typing import Any, Dict, List, Optional
 
 from projectx_sdk.endpoints import BaseService
@@ -13,15 +15,16 @@ class ContractService(BaseService):
 
         Args:
             search_text: The text to search for in contract names.
-            live: Whether to search the live market contracts (True) or the simulation contracts (False).
+            live: Whether to search the live market contracts (True) or
+                  the simulation contracts (False).
 
         Returns:
             A list of matching contracts.
         """
         data = {"searchText": search_text, "live": live}
-        response = self._client.post("Contract/search", json=data)
+        response: Dict[str, Any] = self._client.post("Contract/search", json=data)
         search_response = ContractSearchResponse.model_validate(response)
-        return search_response.contracts
+        return search_response.contracts  # type: ignore
 
     def search_by_id(self, contract_id: str) -> Optional[Contract]:
         """
@@ -34,6 +37,6 @@ class ContractService(BaseService):
             The matching contract if found, None otherwise.
         """
         data = {"contractId": contract_id}
-        response = self._client.post("Contract/searchById", json=data)
+        response: Dict[str, Any] = self._client.post("Contract/searchById", json=data)
         search_response = ContractSearchResponse.model_validate(response)
         return search_response.contracts[0] if search_response.contracts else None

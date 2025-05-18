@@ -2,6 +2,20 @@
 
 from abc import ABC, abstractmethod
 
+from projectx_sdk.models.account import Account, AccountSearchResponse
+from projectx_sdk.models.base import BaseResponse
+from projectx_sdk.models.contract import Contract, ContractSearchResponse
+from projectx_sdk.models.history import Bar, BarResponse
+from projectx_sdk.models.order import (
+    Order,
+    OrderCancellationResponse,
+    OrderModificationResponse,
+    OrderPlacementResponse,
+    OrderSearchResponse,
+)
+from projectx_sdk.models.position import Position, PositionSearchResponse
+from projectx_sdk.models.trade import Trade, TradeSearchResponse
+
 
 class BaseModel(ABC):
     """
@@ -34,21 +48,6 @@ class BaseModel(ABC):
         """
         pass
 
-
-# Import model classes after defining BaseModel
-from projectx_sdk.models.account import Account, AccountSearchResponse
-from projectx_sdk.models.base import BaseResponse
-from projectx_sdk.models.contract import Contract, ContractSearchResponse
-from projectx_sdk.models.history import Bar, BarResponse
-from projectx_sdk.models.order import (
-    Order,
-    OrderCancellationResponse,
-    OrderModificationResponse,
-    OrderPlacementResponse,
-    OrderSearchResponse,
-)
-from projectx_sdk.models.position import Position, PositionSearchResponse
-from projectx_sdk.models.trade import Trade, TradeSearchResponse
 
 __all__ = [
     "BaseModel",

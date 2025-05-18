@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+"""Service module for position-related API endpoints."""
+
+from typing import Any, Dict, List
 
 from projectx_sdk.endpoints import BaseService
 from projectx_sdk.models.position import Position, PositionSearchResponse
@@ -19,15 +21,15 @@ class PositionService(BaseService):
         """
         data = {"accountId": account_id}
 
-        response = self._client.post("Position/searchOpen", json=data)
+        response: Dict[str, Any] = self._client.post("Position/searchOpen", json=data)
         search_response = PositionSearchResponse.model_validate(response)
-        return search_response.positions
+        return search_response.positions  # type: ignore
 
     def close_contract(self, account_id: int, contract_id: str) -> bool:
         """
         Close any open position in a specific contract.
 
-        This will send market orders to offset the entire open position
+        Send market orders to offset the entire open position
         in the specified contract, closing it out completely.
 
         Args:
@@ -39,8 +41,8 @@ class PositionService(BaseService):
         """
         data = {"accountId": account_id, "contractId": contract_id}
 
-        response = self._client.post("Position/closeContract", json=data)
-        return response.get("success", False)
+        response: Dict[str, Any] = self._client.post("Position/closeContract", json=data)
+        return response.get("success", False)  # type: ignore
 
     def partial_close_contract(self, account_id: int, contract_id: str, size: int) -> bool:
         """
@@ -59,5 +61,5 @@ class PositionService(BaseService):
         """
         data = {"accountId": account_id, "contractId": contract_id, "size": size}
 
-        response = self._client.post("Position/partialCloseContract", json=data)
-        return response.get("success", False)
+        response: Dict[str, Any] = self._client.post("Position/partialCloseContract", json=data)
+        return response.get("success", False)  # type: ignore

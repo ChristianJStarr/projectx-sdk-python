@@ -1,5 +1,7 @@
+"""Market hub implementation for the ProjectX Gateway API real-time data."""
+
 import logging
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any, Callable, Dict, Optional
 
 from projectx_sdk.realtime.connection import SignalRConnection
 
@@ -46,7 +48,7 @@ class MarketHub:
             self.hub_url = f"{base_hub_url}{self.hub_path}"
 
             # Initialize connection but don't start yet
-            self._connection = None
+            self._connection: Optional[SignalRConnection] = None  # type: ignore
             self._is_connected = False
             self._owns_connection = True
 
@@ -342,9 +344,7 @@ class MarketHub:
                 self._subscribed_depth.remove(contract_id)
 
     def reconnect_subscriptions(self) -> None:
-        """
-        Reestablish all active subscriptions after a reconnection.
-        """
+        """Reestablish all active subscriptions after a reconnection."""
         if not self._connection:
             return
 

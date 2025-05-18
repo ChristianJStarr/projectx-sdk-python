@@ -1,6 +1,8 @@
+"""Service module for historical market data API endpoints."""
+
 from datetime import datetime
 from enum import IntEnum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from projectx_sdk.endpoints import BaseService
 from projectx_sdk.models.history import Bar, BarResponse
@@ -58,6 +60,6 @@ class HistoryService(BaseService):
             "live": live,
         }
 
-        response = self._client.post("History/retrieveBars", json=data)
+        response: Dict[str, Any] = self._client.post("History/retrieveBars", json=data)
         bar_response = BarResponse.model_validate(response)
-        return bar_response.bars
+        return bar_response.bars  # type: ignore

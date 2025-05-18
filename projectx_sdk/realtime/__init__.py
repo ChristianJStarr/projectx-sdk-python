@@ -66,7 +66,7 @@ class RealTimeClient:
         Returns:
             True if both user and market connections are active
         """
-        return self._user_connection.is_connected() and self._market_connection.is_connected()
+        return self._user_connection.is_connected() and self._market_connection.is_connected()  # type: ignore
 
     def reconnect_subscriptions(self):
         """
@@ -126,18 +126,14 @@ class RealtimeService:
         return self._market
 
     def start(self):
-        """
-        Start the real-time connections that have been created.
-        """
+        """Start the real-time connections that have been created."""
         if self._user is not None:
             self._user.start()
         if self._market is not None:
             self._market.start()
 
     def stop(self):
-        """
-        Stop the real-time connections that have been created.
-        """
+        """Stop the real-time connections that have been created."""
         if self._user is not None:
             self._user.stop()
         if self._market is not None:
