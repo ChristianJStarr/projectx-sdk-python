@@ -261,4 +261,5 @@ class ProjectXClient:
 
     def delete(self, path: str, **kwargs) -> Dict[str, Any]:
         """Make a DELETE request to the API."""
+        # Use the generic request method with the DELETE HTTP method
         return self.request("DELETE", path, **kwargs)

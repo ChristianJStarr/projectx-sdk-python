@@ -45,6 +45,8 @@ strict_optional = true
 
 # Ignore syntax issues in 3rd party packages
 ignore_errors = false
+install_types = true  # Try to auto-install missing stub packages
+non_interactive = true  # Don't ask for confirmation when installing stub packages
 
 [[tool.mypy.overrides]]
 module = ["signalrcore.*", "pytest.*", "responses.*", "pydantic.*"]

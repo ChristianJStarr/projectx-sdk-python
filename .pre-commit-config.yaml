@@ -26,12 +26,15 @@ repos:
     -   id: flake8
         additional_dependencies: [flake8-docstrings]
 
-# Temporarily disable mypy due to issues with Python version compatibility
-# -   repo: https://github.com/pre-commit/mirrors-mypy
-#     rev: v1.3.0
-#     hooks:
-#     -   id: mypy
-#         additional_dependencies:
-#             - types-requests
-#             - types-python-dateutil
-#         exclude: ^projectx_sdk/client\.py$
+# Re-enable mypy with configurations that work
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.3.0
+    hooks:
+    -   id: mypy
+        additional_dependencies:
+            - types-requests
+            - types-python-dateutil
+        args: [
+            "--ignore-missing-imports",
+            "--follow-imports=skip"
+        ]
