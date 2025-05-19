@@ -365,7 +365,7 @@ class UserHub:
 
         return self
 
-    def invoke(self, method, *args):
+    async def invoke(self, method, *args):
         """
         Invoke a hub method.
 
@@ -379,7 +379,7 @@ class UserHub:
         if not self._is_connected or not self._connection:
             raise Exception("Not connected to hub")
 
-        return self._connection.invoke(method, *args)
+        return await self._connection.invoke(method, *args)
 
     def _handle_account_update(self, data):
         """

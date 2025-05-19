@@ -264,7 +264,9 @@ class MarketHub:
                 and contract_id in self._subscribed_quotes
                 and self._connection
             ):
-                self._connection.invoke("UnsubscribeContractQuotes", contract_id)
+                asyncio.create_task(
+                    self._connection.invoke("UnsubscribeContractQuotes", contract_id)
+                )
                 self._subscribed_quotes.remove(contract_id)
 
     def subscribe_trades(
@@ -281,7 +283,7 @@ class MarketHub:
             self._trade_callbacks[contract_id] = []
 
             if self._connection:
-                self._connection.invoke("SubscribeContractTrades", contract_id)
+                asyncio.create_task(self._connection.invoke("SubscribeContractTrades", contract_id))
                 self._subscribed_trades.add(contract_id)
 
         self._trade_callbacks[contract_id].append(callback)
@@ -307,7 +309,9 @@ class MarketHub:
                 and contract_id in self._subscribed_trades
                 and self._connection
             ):
-                self._connection.invoke("UnsubscribeContractTrades", contract_id)
+                asyncio.create_task(
+                    self._connection.invoke("UnsubscribeContractTrades", contract_id)
+                )
                 self._subscribed_trades.remove(contract_id)
 
     def subscribe_market_depth(
@@ -324,7 +328,9 @@ class MarketHub:
             self._depth_callbacks[contract_id] = []
 
             if self._connection:
-                self._connection.invoke("SubscribeContractMarketDepth", contract_id)
+                asyncio.create_task(
+                    self._connection.invoke("SubscribeContractMarketDepth", contract_id)
+                )
                 self._subscribed_depth.add(contract_id)
 
         self._depth_callbacks[contract_id].append(callback)
@@ -352,7 +358,9 @@ class MarketHub:
                 and contract_id in self._subscribed_depth
                 and self._connection
             ):
-                self._connection.invoke("UnsubscribeContractMarketDepth", contract_id)
+                asyncio.create_task(
+                    self._connection.invoke("UnsubscribeContractMarketDepth", contract_id)
+                )
                 self._subscribed_depth.remove(contract_id)
 
     def reconnect_subscriptions(self) -> None:
@@ -362,15 +370,17 @@ class MarketHub:
 
         # Resubscribe to quotes
         for contract_id in self._subscribed_quotes:
-            self._connection.invoke("SubscribeContractQuotes", contract_id)
+            asyncio.create_task(self._connection.invoke("SubscribeContractQuotes", contract_id))
 
         # Resubscribe to trades
         for contract_id in self._subscribed_trades:
-            self._connection.invoke("SubscribeContractTrades", contract_id)
+            asyncio.create_task(self._connection.invoke("SubscribeContractTrades", contract_id))
 
         # Resubscribe to market depth
         for contract_id in self._subscribed_depth:
-            self._connection.invoke("SubscribeContractMarketDepth", contract_id)
+            asyncio.create_task(
+                self._connection.invoke("SubscribeContractMarketDepth", contract_id)
+            )
 
     def _on_connected(self) -> None:
         """
