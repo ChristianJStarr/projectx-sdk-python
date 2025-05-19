@@ -30,37 +30,21 @@ class RealTimeClient:
             user_hub_url: URL for the user hub (optional)
             market_hub_url: URL for the market hub (optional)
         """
-        # Create hub instances first
-        self.user = UserHub.__new__(UserHub)
-        self.market = MarketHub.__new__(MarketHub)
-
-        # Use provided URLs or generate default ones based on environment
-        default_base_url = f"wss://gateway-rtc-{environment}.s2f.projectx.com"
-
-        # Initialize connections with the hub callbacks
+        # Create hub instances with their connections
         self._user_connection = SignalRConnection(
-            hub_url=user_hub_url or f"{default_base_url}/hubs/user",
+            hub_url=user_hub_url or f"wss://gateway-rtc-{environment}.s2f.projectx.com/hubs/user",
             access_token=auth_token,
-            connection_callback=self.user._on_connected,
+            connection_callback=None,  # Will be set by UserHub
         )
         self._market_connection = SignalRConnection(
-            hub_url=market_hub_url or f"{default_base_url}/hubs/market",
+            hub_url=market_hub_url
+            or f"wss://gateway-rtc-{environment}.s2f.projectx.com/hubs/market",
             access_token=auth_token,
-            connection_callback=self.market._on_connected,
+            connection_callback=None,  # Will be set by MarketHub
         )
 
-        # Initialize hubs with the connections
-        self.user._connection = self._user_connection
-        self.user._is_connected = self._user_connection.is_connected()
-        self.user._owns_connection = False
-
-        self.market._connection = self._market_connection
-        self.market._is_connected = self._market_connection.is_connected()
-        self.market._owns_connection = False
-
-        # Register handlers
-        self.user._register_handlers()
-        self.market._register_handlers()
+        self.user = UserHub(self._user_connection)
+        self.market = MarketHub(self._market_connection)
 
     async def start(self):
         """Start both real-time connections."""
