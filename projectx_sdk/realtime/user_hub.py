@@ -1,5 +1,6 @@
 """User hub implementation for the ProjectX Gateway API."""
 
+import asyncio
 import logging
 from typing import Callable, Dict, List, Optional, Set
 
@@ -229,7 +230,7 @@ class UserHub:
             self._account_callbacks.append(callback)
 
         if self._is_connected:
-            self.invoke("SubscribeAccounts")
+            asyncio.create_task(self.invoke("SubscribeAccounts"))
             self._account_subscribed = True
 
         return self
@@ -242,7 +243,7 @@ class UserHub:
             self: For method chaining
         """
         if self._is_connected and self._account_subscribed:
-            self.invoke("UnsubscribeAccounts")
+            asyncio.create_task(self.invoke("UnsubscribeAccounts"))
             self._account_subscribed = False
 
         return self
@@ -265,7 +266,7 @@ class UserHub:
             self._order_callbacks[account_id].append(callback)
 
         if self._is_connected:
-            self.invoke("SubscribeOrders", account_id)
+            asyncio.create_task(self.invoke("SubscribeOrders", account_id))
             self._subscribed_orders.add(account_id)
 
         return self
@@ -281,7 +282,7 @@ class UserHub:
             self: For method chaining
         """
         if self._is_connected and account_id in self._subscribed_orders:
-            self.invoke("UnsubscribeOrders", account_id)
+            asyncio.create_task(self.invoke("UnsubscribeOrders", account_id))
             self._subscribed_orders.discard(account_id)
 
         return self
@@ -304,7 +305,7 @@ class UserHub:
             self._position_callbacks[account_id].append(callback)
 
         if self._is_connected:
-            self.invoke("SubscribePositions", account_id)
+            asyncio.create_task(self.invoke("SubscribePositions", account_id))
             self._subscribed_positions.add(account_id)
 
         return self
@@ -320,7 +321,7 @@ class UserHub:
             self: For method chaining
         """
         if self._is_connected and account_id in self._subscribed_positions:
-            self.invoke("UnsubscribePositions", account_id)
+            asyncio.create_task(self.invoke("UnsubscribePositions", account_id))
             self._subscribed_positions.discard(account_id)
 
         return self
@@ -343,7 +344,7 @@ class UserHub:
             self._trade_callbacks[account_id].append(callback)
 
         if self._is_connected:
-            self.invoke("SubscribeTrades", account_id)
+            asyncio.create_task(self.invoke("SubscribeTrades", account_id))
             self._subscribed_trades.add(account_id)
 
         return self
@@ -359,7 +360,7 @@ class UserHub:
             self: For method chaining
         """
         if self._is_connected and account_id in self._subscribed_trades:
-            self.invoke("UnsubscribeTrades", account_id)
+            asyncio.create_task(self.invoke("UnsubscribeTrades", account_id))
             self._subscribed_trades.discard(account_id)
 
         return self

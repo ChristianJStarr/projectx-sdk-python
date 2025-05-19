@@ -1,5 +1,6 @@
 """Market hub implementation for the ProjectX Gateway API real-time data."""
 
+import asyncio
 import logging
 from typing import Any, Callable, Dict, Optional
 
@@ -237,7 +238,7 @@ class MarketHub:
             self._quote_callbacks[contract_id] = []
 
             if self._connection:
-                self._connection.invoke("SubscribeContractQuotes", contract_id)
+                asyncio.create_task(self._connection.invoke("SubscribeContractQuotes", contract_id))
                 self._subscribed_quotes.add(contract_id)
 
         self._quote_callbacks[contract_id].append(callback)
