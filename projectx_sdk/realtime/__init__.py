@@ -94,7 +94,6 @@ class RealTimeClient:
         self.market.reconnect_subscriptions()
 
 
-# Class for backward compatibility with tests
 class RealtimeService:
     """
     Legacy service class for real-time communication.
@@ -113,18 +112,8 @@ class RealtimeService:
         self._client = client
         self._user = None
         self._market = None
-
-        # For backward compatibility with tests, always set base_hub_url
-        self._base_hub_url = f"wss://gateway-rtc-{client.environment}.s2f.projectx.com"
-
-        # Check if we should use the new URL pattern from client.USER_HUB_URLS
-        if hasattr(client, "USER_HUB_URLS") and client.environment in client.USER_HUB_URLS:
-            self._user_hub_url = client.USER_HUB_URLS.get(client.environment)
-            self._market_hub_url = client.MARKET_HUB_URLS.get(client.environment)
-        else:
-            # Fallback to old URL pattern
-            self._user_hub_url = None
-            self._market_hub_url = None
+        self._user_hub_url = client.USER_HUB_URLS.get(client.environment)
+        self._market_hub_url = client.MARKET_HUB_URLS.get(client.environment)
 
     @property
     def user(self):
@@ -135,10 +124,7 @@ class RealtimeService:
             UserHub: The user hub instance
         """
         if self._user is None:
-            if self._user_hub_url:
-                self._user = UserHub(self._client, self._base_hub_url, self._user_hub_url)
-            else:
-                self._user = UserHub(self._client, self._base_hub_url)
+            self._user = UserHub(self._client, None, self._user_hub_url)
         return self._user
 
     @property
@@ -152,10 +138,7 @@ class RealtimeService:
         if self._market is None:
             from projectx_sdk.realtime.market_hub import MarketHub
 
-            if self._market_hub_url:
-                self._market = MarketHub(self._client, self._base_hub_url, self._market_hub_url)
-            else:
-                self._market = MarketHub(self._client, self._base_hub_url)
+            self._market = MarketHub(self._client, None, self._market_hub_url)
         return self._market
 
     def start(self):

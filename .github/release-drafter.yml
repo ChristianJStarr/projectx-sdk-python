@@ -1,0 +1,46 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+categories:
+  - title: '🚀 Features'
+    labels:
+      - 'feature'
+      - 'enhancement'
+      - 'feat'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'bug'
+      - 'fix'
+  - title: '🧰 Maintenance'
+    labels:
+      - 'chore'
+      - 'maintenance'
+      - 'refactor'
+
+change-template: '- $TITLE (#$NUMBER)'
+
+no-changes-template: '- No significant changes.'
+
+version-resolver:
+  major:
+    labels:
+      - 'breaking'
+  minor:
+    labels:
+      - 'feature'
+      - 'enhancement'
+      - 'feat'
+  patch:
+    labels:
+      - 'bug'
+      - 'fix'
+      - 'chore'
+      - 'maintenance'
+      - 'refactor'
+
+exclude-labels:
+  - 'skip-changelog'
+
+template: |
+  ## Changes
+  $CHANGES

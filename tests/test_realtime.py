@@ -16,7 +16,7 @@ class TestRealtimeService:
         assert service._client == authenticated_client
         assert service._user is None
         assert service._market is None
-        assert service._base_hub_url is not None
+        # _base_hub_url is no longer used or required
 
     def test_user_hub_lazy_loading(self, authenticated_client):
         """Test that the user hub is lazily loaded."""

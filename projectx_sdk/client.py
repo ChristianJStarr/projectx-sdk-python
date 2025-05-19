@@ -33,7 +33,7 @@ class ProjectXClient:
     session management, and request routing.
     """
 
-    # Map of environment names to base URLs
+    # Map of environment names to base URLs (only new endpoints)
     ENVIRONMENT_URLS = {
         "alphaticks": "https://api.alphaticks.projectx.com",
         "blueguardian": "https://api.blueguardianfutures.projectx.com",
@@ -52,7 +52,7 @@ class ProjectXClient:
         "demo": "https://gateway-api-demo.s2f.projectx.com",
     }
 
-    # Map of environment names to user hub URLs
+    # Map of environment names to user hub URLs (only new endpoints)
     USER_HUB_URLS = {
         "alphaticks": "https://rtc.alphaticks.projectx.com/hubs/user",
         "blueguardian": "https://rtc.blueguardianfutures.projectx.com/hubs/user",
@@ -71,7 +71,7 @@ class ProjectXClient:
         "demo": "https://gateway-api-demo.s2f.projectx.com/hubs/user",
     }
 
-    # Map of environment names to market hub URLs
+    # Map of environment names to market hub URLs (only new endpoints)
     MARKET_HUB_URLS = {
         "alphaticks": "https://rtc.alphaticks.projectx.com/hubs/market",
         "blueguardian": "https://rtc.blueguardianfutures.projectx.com/hubs/market",
