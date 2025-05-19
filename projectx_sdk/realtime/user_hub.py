@@ -19,17 +19,19 @@ class UserHub:
     - Trade (execution) notifications
     """
 
-    def __init__(self, client_or_connection, base_hub_url=None):
+    def __init__(self, client_or_connection, base_hub_url=None, hub_url=None):
         """
         Initialize the user hub connection.
 
-        This constructor supports two signatures for backward compatibility:
+        This constructor supports multiple signatures for flexibility:
         1. UserHub(client, base_hub_url) - legacy construction using client and base URL
-        2. UserHub(connection) - new construction using a SignalRConnection directly
+        2. UserHub(client, None, hub_url) - construction using client and direct hub URL
+        3. UserHub(connection) - construction using a SignalRConnection directly
 
         Args:
             client_or_connection: Either a ProjectXClient instance or a SignalRConnection
-            base_hub_url (str, optional): The base hub URL (required for legacy constructor)
+            base_hub_url (str, optional): The base hub URL (for legacy constructor)
+            hub_url (str, optional): The complete hub URL (overrides base_hub_url)
         """
         # Initialize instance variables first
         self.__init_instance_vars()
@@ -41,19 +43,28 @@ class UserHub:
             self._is_connected = self._connection.is_connected()
             self._owns_connection = False
         else:
-            # Legacy constructor with client and base_hub_url
-            if base_hub_url is None:
-                raise ValueError("base_hub_url is required when using client-based constructor")
-
+            # Constructor with client and URL
             self._client = client_or_connection
-            self.base_hub_url = base_hub_url
-            self.hub_path = "/hubs/user"
-            self.hub_url = f"{base_hub_url}{self.hub_path}"
+            self._owns_connection = True
+
+            if hub_url:
+                # Direct hub URL provided
+                self.hub_url = hub_url
+                self.base_hub_url = None
+                self.hub_path = None
+            elif base_hub_url:
+                # Base URL provided, construct hub URL
+                self.base_hub_url = base_hub_url
+                self.hub_path = "/hubs/user"
+                self.hub_url = f"{base_hub_url}{self.hub_path}"
+            else:
+                raise ValueError(
+                    "Either base_hub_url or hub_url is required when using client-based constructor"
+                )
 
             # Initialize connection but don't start yet
             self._connection: Optional[SignalRConnection] = None  # type: ignore
             self._is_connected = False
-            self._owns_connection = True
 
         # Register handlers if using direct connection
         if not self._owns_connection:

@@ -35,21 +35,59 @@ class ProjectXClient:
 
     # Map of environment names to base URLs
     ENVIRONMENT_URLS = {
-        "alphaticks": "https://gateway-api-alphaticks.s2f.projectx.com",
-        "blueguardian": "https://gateway-api-blueguardian.s2f.projectx.com",
-        "blusky": "https://gateway-api-blusky.s2f.projectx.com",
-        "e8x": "https://gateway-api-e8x.s2f.projectx.com",
-        "fundingfutures": "https://gateway-api-fundingfutures.s2f.projectx.com",
-        "thefuturesdesk": "https://gateway-api-thefuturesdesk.s2f.projectx.com",
-        "futureselite": "https://gateway-api-futureselite.s2f.projectx.com",
-        "fxifyfutures": "https://gateway-api-fxifyfutures.s2f.projectx.com",
-        "goatfunded": "https://gateway-api-goatfunded.s2f.projectx.com",
-        "tickticktrader": "https://gateway-api-tickticktrader.s2f.projectx.com",
-        "toponefutures": "https://gateway-api-toponefutures.s2f.projectx.com",
-        "topstepx": "https://gateway-api-topstepx.s2f.projectx.com",
-        "tx3funding": "https://gateway-api-tx3funding.s2f.projectx.com",
+        "alphaticks": "https://api.alphaticks.projectx.com",
+        "blueguardian": "https://api.blueguardianfutures.projectx.com",
+        "blusky": "https://api.blusky.projectx.com",
+        "e8x": "https://api.e8.projectx.com",
+        "fundingfutures": "https://api.fundingfutures.projectx.com",
+        "thefuturesdesk": "https://api.thefuturesdesk.projectx.com",
+        "futureselite": "https://api.futureselite.projectx.com",
+        "fxifyfutures": "https://api.fxifyfutures.projectx.com",
+        "goatfunded": "https://api.goatfundedfutures.projectx.com",
+        "tickticktrader": "https://api.tickticktrader.projectx.com",
+        "toponefutures": "https://api.toponefutures.projectx.com",
+        "topstepx": "https://api.topstepx.com",
+        "tx3funding": "https://api.tx3funding.projectx.com",
         # For testing/demo
         "demo": "https://gateway-api-demo.s2f.projectx.com",
+    }
+
+    # Map of environment names to user hub URLs
+    USER_HUB_URLS = {
+        "alphaticks": "https://rtc.alphaticks.projectx.com/hubs/user",
+        "blueguardian": "https://rtc.blueguardianfutures.projectx.com/hubs/user",
+        "blusky": "https://rtc.blusky.projectx.com/hubs/user",
+        "e8x": "https://rtc.e8.projectx.com/hubs/user",
+        "fundingfutures": "https://rtc.fundingfutures.projectx.com/hubs/user",
+        "thefuturesdesk": "https://rtc.thefuturesdesk.projectx.com/hubs/user",
+        "futureselite": "https://rtc.futureselite.projectx.com/hubs/user",
+        "fxifyfutures": "https://rtc.fxifyfutures.projectx.com/hubs/user",
+        "goatfunded": "https://rtc.goatfundedfutures.projectx.com/hubs/user",
+        "tickticktrader": "https://rtc.tickticktrader.projectx.com/hubs/user",
+        "toponefutures": "https://rtc.toponefutures.projectx.com/hubs/user",
+        "topstepx": "https://rtc.topstepx.com/hubs/user",
+        "tx3funding": "https://rtc.tx3funding.projectx.com/hubs/user",
+        # For testing/demo
+        "demo": "https://gateway-api-demo.s2f.projectx.com/hubs/user",
+    }
+
+    # Map of environment names to market hub URLs
+    MARKET_HUB_URLS = {
+        "alphaticks": "https://rtc.alphaticks.projectx.com/hubs/market",
+        "blueguardian": "https://rtc.blueguardianfutures.projectx.com/hubs/market",
+        "blusky": "https://rtc.blusky.projectx.com/hubs/market",
+        "e8x": "https://rtc.e8.projectx.com/hubs/market",
+        "fundingfutures": "https://rtc.fundingfutures.projectx.com/hubs/market",
+        "thefuturesdesk": "https://rtc.thefuturesdesk.projectx.com/hubs/market",
+        "futureselite": "https://rtc.futureselite.projectx.com/hubs/market",
+        "fxifyfutures": "https://rtc.fxifyfutures.projectx.com/hubs/market",
+        "goatfunded": "https://rtc.goatfundedfutures.projectx.com/hubs/market",
+        "tickticktrader": "https://rtc.tickticktrader.projectx.com/hubs/market",
+        "toponefutures": "https://rtc.toponefutures.projectx.com/hubs/market",
+        "topstepx": "https://rtc.topstepx.com/hubs/market",
+        "tx3funding": "https://rtc.tx3funding.projectx.com/hubs/market",
+        # For testing/demo
+        "demo": "https://gateway-api-demo.s2f.projectx.com/hubs/market",
     }
 
     def __init__(
@@ -132,7 +170,12 @@ class ProjectXClient:
         """
         if not self._realtime:
             token = self.auth.get_token()
-            self._realtime = RealTimeClient(auth_token=token, environment=self.environment)
+            self._realtime = RealTimeClient(
+                auth_token=token,
+                environment=self.environment,
+                user_hub_url=self.USER_HUB_URLS.get(self.environment),
+                market_hub_url=self.MARKET_HUB_URLS.get(self.environment),
+            )
         return self._realtime
 
     def request(

@@ -1,5 +1,7 @@
 """Real-time communication modules for ProjectX Gateway API."""
 
+from typing import Optional
+
 from projectx_sdk.realtime.connection import SignalRConnection
 from projectx_sdk.realtime.market_hub import MarketHub
 from projectx_sdk.realtime.user_hub import UserHub
@@ -12,26 +14,37 @@ class RealTimeClient:
     Manages connections to the User and Market hubs for real-time data.
     """
 
-    def __init__(self, auth_token: str, environment: str):
+    def __init__(
+        self,
+        auth_token: str,
+        environment: str,
+        user_hub_url: Optional[str] = None,
+        market_hub_url: Optional[str] = None,
+    ):
         """
         Initialize a real-time client.
 
         Args:
             auth_token: JWT auth token for API access
             environment: Environment name (e.g., 'topstepx')
+            user_hub_url: URL for the user hub (optional)
+            market_hub_url: URL for the market hub (optional)
         """
         # Create hub instances first
         self.user = UserHub.__new__(UserHub)
         self.market = MarketHub.__new__(MarketHub)
 
+        # Use provided URLs or generate default ones based on environment
+        default_base_url = f"wss://gateway-rtc-{environment}.s2f.projectx.com"
+
         # Initialize connections with the hub callbacks
         self._user_connection = SignalRConnection(
-            hub_url=f"wss://gateway-rtc-{environment}.s2f.projectx.com/hubs/user",
+            hub_url=user_hub_url or f"{default_base_url}/hubs/user",
             access_token=auth_token,
             connection_callback=self.user._on_connected,
         )
         self._market_connection = SignalRConnection(
-            hub_url=f"wss://gateway-rtc-{environment}.s2f.projectx.com/hubs/market",
+            hub_url=market_hub_url or f"{default_base_url}/hubs/market",
             access_token=auth_token,
             connection_callback=self.market._on_connected,
         )
@@ -100,7 +113,18 @@ class RealtimeService:
         self._client = client
         self._user = None
         self._market = None
+
+        # For backward compatibility with tests, always set base_hub_url
         self._base_hub_url = f"wss://gateway-rtc-{client.environment}.s2f.projectx.com"
+
+        # Check if we should use the new URL pattern from client.USER_HUB_URLS
+        if hasattr(client, "USER_HUB_URLS") and client.environment in client.USER_HUB_URLS:
+            self._user_hub_url = client.USER_HUB_URLS.get(client.environment)
+            self._market_hub_url = client.MARKET_HUB_URLS.get(client.environment)
+        else:
+            # Fallback to old URL pattern
+            self._user_hub_url = None
+            self._market_hub_url = None
 
     @property
     def user(self):
@@ -111,7 +135,10 @@ class RealtimeService:
             UserHub: The user hub instance
         """
         if self._user is None:
-            self._user = UserHub(self._client, self._base_hub_url)
+            if self._user_hub_url:
+                self._user = UserHub(self._client, self._base_hub_url, self._user_hub_url)
+            else:
+                self._user = UserHub(self._client, self._base_hub_url)
         return self._user
 
     @property
@@ -125,7 +152,10 @@ class RealtimeService:
         if self._market is None:
             from projectx_sdk.realtime.market_hub import MarketHub
 
-            self._market = MarketHub(self._client, self._base_hub_url)
+            if self._market_hub_url:
+                self._market = MarketHub(self._client, self._base_hub_url, self._market_hub_url)
+            else:
+                self._market = MarketHub(self._client, self._base_hub_url)
         return self._market
 
     def start(self):
