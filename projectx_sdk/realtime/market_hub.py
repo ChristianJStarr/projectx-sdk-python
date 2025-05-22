@@ -179,52 +179,208 @@ class MarketHub:
             logger.error(f"Failed to stop connection: {str(e)}")
             return False
 
-    def _handle_quote(self, contract_id: str, data: Dict[str, Any]) -> None:
+    def _handle_quote(self, data_or_contract_id, data=None):
         """
         Handle an incoming quote event.
 
+        This handler supports two invocation patterns:
+        1. _handle_quote(data) - where data is a dictionary with contractId and data fields
+        2. _handle_quote(contract_id, data) - where contract_id is a string and data is a dictionary
+
         Args:
-            contract_id: The contract ID the quote is for
-            data: The quote data
+            data_or_contract_id: Either the data dict or the contract ID string
+            data: The quote data (when using the second pattern)
         """
+        contract_id = None
+        quote_data = None
+
+        # Determine which pattern we're using
+        if data is None:
+            # First pattern: data_or_contract_id is the data object
+            try:
+                # Check if data_or_contract_id is a string (likely a contract ID without data)
+                if isinstance(data_or_contract_id, str):
+                    contract_id = data_or_contract_id
+                    quote_data = {}  # No data provided, use empty dict
+                # Extract contract_id and data from the received data object
+                elif isinstance(data_or_contract_id, list) and len(data_or_contract_id) > 0:
+                    # SignalR direct format: [contract_id, data_dict]
+                    if len(data_or_contract_id) >= 2 and isinstance(data_or_contract_id[0], str):
+                        contract_id = data_or_contract_id[0]
+                        quote_data = data_or_contract_id[1]
+                    else:
+                        message_data = data_or_contract_id[0]
+                        # Check if the message data is a string
+                        if isinstance(message_data, str):
+                            contract_id = message_data
+                            quote_data = {}
+                        else:
+                            contract_id = message_data.get("contractId")
+                            quote_data = message_data.get("data", {})
+                elif isinstance(data_or_contract_id, dict):
+                    contract_id = data_or_contract_id.get("contractId")
+                    quote_data = data_or_contract_id.get("data", {})
+                else:
+                    logger.error(
+                        "Invalid quote data format: {} (type: {})".format(
+                            data_or_contract_id, type(data_or_contract_id)
+                        )
+                    )
+                    return
+            except Exception as e:
+                logger.error(f"Error parsing quote data: {e}")
+                return
+        else:
+            # Second pattern: data_or_contract_id is the contract_id
+            contract_id = data_or_contract_id
+            quote_data = data
+
+        if not contract_id:
+            logger.debug("No contract ID in quote data")
+            return
+
         if contract_id in self._quote_callbacks:
             for callback in self._quote_callbacks[contract_id]:
                 try:
-                    callback(contract_id, data)
+                    callback(contract_id, quote_data)
                 except Exception as e:
                     logger.error(f"Error in quote callback: {e}")
 
-    def _handle_trade(self, contract_id: str, data: Dict[str, Any]) -> None:
+    def _handle_trade(self, data_or_contract_id, data=None):
         """
         Handle an incoming trade event.
 
+        This handler supports two invocation patterns:
+        1. _handle_trade(data) - where data is a dictionary with contractId and data fields
+        2. _handle_trade(contract_id, data) - where contract_id is a string and data is a dictionary
+
         Args:
-            contract_id: The contract ID the trade is for
-            data: The trade data
+            data_or_contract_id: Either the data dict or the contract ID string
+            data: The trade data (when using the second pattern)
         """
+        contract_id = None
+        trade_data = None
+
+        # Determine which pattern we're using
+        if data is None:
+            # First pattern: data_or_contract_id is the data object
+            try:
+                # Check if data_or_contract_id is a string (likely a contract ID without data)
+                if isinstance(data_or_contract_id, str):
+                    contract_id = data_or_contract_id
+                    trade_data = {}  # No data provided, use empty dict
+                # Extract contract_id and data from the received data object
+                elif isinstance(data_or_contract_id, list) and len(data_or_contract_id) > 0:
+                    # SignalR direct format: [contract_id, data_dict]
+                    if len(data_or_contract_id) >= 2 and isinstance(data_or_contract_id[0], str):
+                        contract_id = data_or_contract_id[0]
+                        trade_data = data_or_contract_id[1]
+                    else:
+                        message_data = data_or_contract_id[0]
+                        # Check if the message data is a string
+                        if isinstance(message_data, str):
+                            contract_id = message_data
+                            trade_data = {}
+                        else:
+                            contract_id = message_data.get("contractId")
+                            trade_data = message_data.get("data", {})
+                elif isinstance(data_or_contract_id, dict):
+                    contract_id = data_or_contract_id.get("contractId")
+                    trade_data = data_or_contract_id.get("data", {})
+                else:
+                    logger.error(
+                        "Invalid trade data format: {} (type: {})".format(
+                            data_or_contract_id, type(data_or_contract_id)
+                        )
+                    )
+                    return
+            except Exception as e:
+                logger.error(f"Error parsing trade data: {e}")
+                return
+        else:
+            # Second pattern: data_or_contract_id is the contract_id
+            contract_id = data_or_contract_id
+            trade_data = data
+
+        if not contract_id:
+            logger.debug("No contract ID in trade data")
+            return
+
         if contract_id in self._trade_callbacks:
             for callback in self._trade_callbacks[contract_id]:
                 try:
-                    callback(contract_id, data)
+                    callback(contract_id, trade_data)
                 except Exception as e:
                     logger.error(f"Error in trade callback: {e}")
 
-    def _handle_depth(self, contract_id: str, data: Dict[str, Any]) -> None:
+    def _handle_depth(self, data_or_contract_id, data=None):
         """
         Handle an incoming depth event.
 
+        This handler supports two invocation patterns:
+        1. _handle_depth(data) - where data is a dictionary with contractId and data fields
+        2. _handle_depth(contract_id, data) - where contract_id is a string and data is a dictionary
+
         Args:
-            contract_id: The contract ID the depth is for
-            data: The market depth data
+            data_or_contract_id: Either the data dict or the contract ID string
+            data: The market depth data (when using the second pattern)
         """
+        contract_id = None
+        depth_data = None
+
+        # Determine which pattern we're using
+        if data is None:
+            # First pattern: data_or_contract_id is the data object
+            try:
+                # Check if data_or_contract_id is a string (likely a contract ID without data)
+                if isinstance(data_or_contract_id, str):
+                    contract_id = data_or_contract_id
+                    depth_data = {}  # No data provided, use empty dict
+                # Extract contract_id and data from the received data object
+                elif isinstance(data_or_contract_id, list) and len(data_or_contract_id) > 0:
+                    # SignalR direct format: [contract_id, data_dict]
+                    if len(data_or_contract_id) >= 2 and isinstance(data_or_contract_id[0], str):
+                        contract_id = data_or_contract_id[0]
+                        depth_data = data_or_contract_id[1]
+                    else:
+                        message_data = data_or_contract_id[0]
+                        # Check if the message data is a string
+                        if isinstance(message_data, str):
+                            contract_id = message_data
+                            depth_data = {}
+                        else:
+                            contract_id = message_data.get("contractId")
+                            depth_data = message_data.get("data", {})
+                elif isinstance(data_or_contract_id, dict):
+                    contract_id = data_or_contract_id.get("contractId")
+                    depth_data = data_or_contract_id.get("data", {})
+                else:
+                    logger.error(
+                        "Invalid depth data format: {} (type: {})".format(
+                            data_or_contract_id, type(data_or_contract_id)
+                        )
+                    )
+                    return
+            except Exception as e:
+                logger.error(f"Error parsing depth data: {e}")
+                return
+        else:
+            # Second pattern: data_or_contract_id is the contract_id
+            contract_id = data_or_contract_id
+            depth_data = data
+
+        if not contract_id:
+            logger.debug("No contract ID in depth data")
+            return
+
         if contract_id in self._depth_callbacks:
             for callback in self._depth_callbacks[contract_id]:
                 try:
-                    callback(contract_id, data)
+                    callback(contract_id, depth_data)
                 except Exception as e:
                     logger.error(f"Error in depth callback: {e}")
 
-    def subscribe_quotes(
+    async def subscribe_quotes(
         self, contract_id: str, callback: Callable[[str, Dict[str, Any]], None]
     ) -> None:
         """
@@ -234,16 +390,23 @@ class MarketHub:
             contract_id: The contract ID to subscribe to
             callback: Function to call when a quote is received
         """
+        logger.info(f"Subscribing to quotes for contract: {contract_id}")
+
         if contract_id not in self._quote_callbacks:
             self._quote_callbacks[contract_id] = []
 
             if self._connection:
-                asyncio.create_task(self._connection.invoke("SubscribeContractQuotes", contract_id))
+                try:
+                    await self._connection.invoke("SubscribeContractQuotes", contract_id)
+                except Exception as e:
+                    logger.error(f"Error subscribing to quotes: {e}")
                 self._subscribed_quotes.add(contract_id)
 
         self._quote_callbacks[contract_id].append(callback)
 
-    def unsubscribe_quotes(self, contract_id: str, callback: Optional[Callable] = None) -> None:
+    async def unsubscribe_quotes(
+        self, contract_id: str, callback: Optional[Callable] = None
+    ) -> None:
         """
         Unsubscribe from real-time quotes for a contract.
 
@@ -251,25 +414,34 @@ class MarketHub:
             contract_id: The contract ID to unsubscribe from
             callback: Specific callback to remove, or None to remove all
         """
+        logger.debug(f"Unsubscribing from quotes for contract: {contract_id}")
+
         if contract_id in self._quote_callbacks:
             if callback is None:
                 self._quote_callbacks[contract_id] = []
+                logger.debug(f"Removed all callbacks for contract {contract_id}")
             else:
                 self._quote_callbacks[contract_id] = [
                     cb for cb in self._quote_callbacks[contract_id] if cb != callback
                 ]
+                count = len(self._quote_callbacks[contract_id])
+                logger.debug(f"Removed specific callback. Remaining: {count}")
 
             if (
                 not self._quote_callbacks[contract_id]
                 and contract_id in self._subscribed_quotes
                 and self._connection
             ):
-                asyncio.create_task(
-                    self._connection.invoke("UnsubscribeContractQuotes", contract_id)
-                )
+                logger.debug(f"Invoking UnsubscribeContractQuotes for {contract_id}")
+                try:
+                    method = "UnsubscribeContractQuotes"
+                    result = await self._connection.invoke(method, contract_id)
+                    logger.debug(f"{method} result: {result}")
+                except Exception as e:
+                    logger.error(f"Error unsubscribing from quotes: {e}")
                 self._subscribed_quotes.remove(contract_id)
 
-    def subscribe_trades(
+    async def subscribe_trades(
         self, contract_id: str, callback: Callable[[str, Dict[str, Any]], None]
     ) -> None:
         """
@@ -279,16 +451,23 @@ class MarketHub:
             contract_id: The contract ID to subscribe to
             callback: Function to call when a trade is received
         """
+        logger.info(f"Subscribing to trades for contract: {contract_id}")
+
         if contract_id not in self._trade_callbacks:
             self._trade_callbacks[contract_id] = []
 
             if self._connection:
-                asyncio.create_task(self._connection.invoke("SubscribeContractTrades", contract_id))
+                try:
+                    await self._connection.invoke("SubscribeContractTrades", contract_id)
+                except Exception as e:
+                    logger.error(f"Error subscribing to trades: {e}")
                 self._subscribed_trades.add(contract_id)
 
         self._trade_callbacks[contract_id].append(callback)
 
-    def unsubscribe_trades(self, contract_id: str, callback: Optional[Callable] = None) -> None:
+    async def unsubscribe_trades(
+        self, contract_id: str, callback: Optional[Callable] = None
+    ) -> None:
         """
         Unsubscribe from real-time trades for a contract.
 
@@ -296,25 +475,34 @@ class MarketHub:
             contract_id: The contract ID to unsubscribe from
             callback: Specific callback to remove, or None to remove all
         """
+        logger.debug(f"Unsubscribing from trades for contract: {contract_id}")
+
         if contract_id in self._trade_callbacks:
             if callback is None:
                 self._trade_callbacks[contract_id] = []
+                logger.debug(f"Removed all callbacks for contract {contract_id}")
             else:
                 self._trade_callbacks[contract_id] = [
                     cb for cb in self._trade_callbacks[contract_id] if cb != callback
                 ]
+                count = len(self._trade_callbacks[contract_id])
+                logger.debug(f"Removed specific callback. Remaining: {count}")
 
             if (
                 not self._trade_callbacks[contract_id]
                 and contract_id in self._subscribed_trades
                 and self._connection
             ):
-                asyncio.create_task(
-                    self._connection.invoke("UnsubscribeContractTrades", contract_id)
-                )
+                logger.debug(f"Invoking UnsubscribeContractTrades for {contract_id}")
+                try:
+                    method = "UnsubscribeContractTrades"
+                    result = await self._connection.invoke(method, contract_id)
+                    logger.debug(f"{method} result: {result}")
+                except Exception as e:
+                    logger.error(f"Error unsubscribing from trades: {e}")
                 self._subscribed_trades.remove(contract_id)
 
-    def subscribe_market_depth(
+    async def subscribe_market_depth(
         self, contract_id: str, callback: Callable[[str, Dict[str, Any]], None]
     ) -> None:
         """
@@ -324,18 +512,21 @@ class MarketHub:
             contract_id: The contract ID to subscribe to
             callback: Function to call when depth data is received
         """
+        logger.info(f"Subscribing to market depth for contract: {contract_id}")
+
         if contract_id not in self._depth_callbacks:
             self._depth_callbacks[contract_id] = []
 
             if self._connection:
-                asyncio.create_task(
-                    self._connection.invoke("SubscribeContractMarketDepth", contract_id)
-                )
+                try:
+                    await self._connection.invoke("SubscribeContractMarketDepth", contract_id)
+                except Exception as e:
+                    logger.error(f"Error subscribing to market depth: {e}")
                 self._subscribed_depth.add(contract_id)
 
         self._depth_callbacks[contract_id].append(callback)
 
-    def unsubscribe_market_depth(
+    async def unsubscribe_market_depth(
         self, contract_id: str, callback: Optional[Callable] = None
     ) -> None:
         """
@@ -345,42 +536,61 @@ class MarketHub:
             contract_id: The contract ID to unsubscribe from
             callback: Specific callback to remove, or None to remove all
         """
+        logger.debug(f"Unsubscribing from market depth for contract: {contract_id}")
+
         if contract_id in self._depth_callbacks:
             if callback is None:
                 self._depth_callbacks[contract_id] = []
+                logger.debug(f"Removed all callbacks for contract {contract_id}")
             else:
                 self._depth_callbacks[contract_id] = [
                     cb for cb in self._depth_callbacks[contract_id] if cb != callback
                 ]
+                count = len(self._depth_callbacks[contract_id])
+                logger.debug(f"Removed specific callback. Remaining: {count}")
 
             if (
                 not self._depth_callbacks[contract_id]
                 and contract_id in self._subscribed_depth
                 and self._connection
             ):
-                asyncio.create_task(
-                    self._connection.invoke("UnsubscribeContractMarketDepth", contract_id)
-                )
+                logger.debug(f"Invoking UnsubscribeContractMarketDepth for {contract_id}")
+                try:
+                    method = "UnsubscribeContractMarketDepth"
+                    result = await self._connection.invoke(method, contract_id)
+                    logger.debug(f"{method} result: {result}")
+                except Exception as e:
+                    logger.error(f"Error unsubscribing from market depth: {e}")
                 self._subscribed_depth.remove(contract_id)
 
-    def reconnect_subscriptions(self) -> None:
+    async def reconnect_subscriptions(self) -> None:
         """Reestablish all active subscriptions after a reconnection."""
+        logger.info("Reconnecting subscriptions")
+
         if not self._connection:
+            logger.warning("Cannot reconnect subscriptions: no connection")
             return
 
         # Resubscribe to quotes
         for contract_id in self._subscribed_quotes:
-            asyncio.create_task(self._connection.invoke("SubscribeContractQuotes", contract_id))
+            try:
+                await self._connection.invoke("SubscribeContractQuotes", contract_id)
+            except Exception as e:
+                logger.error(f"Error reconnecting quotes for {contract_id}: {e}")
 
         # Resubscribe to trades
         for contract_id in self._subscribed_trades:
-            asyncio.create_task(self._connection.invoke("SubscribeContractTrades", contract_id))
+            try:
+                await self._connection.invoke("SubscribeContractTrades", contract_id)
+            except Exception as e:
+                logger.error(f"Error reconnecting trades for {contract_id}: {e}")
 
         # Resubscribe to market depth
         for contract_id in self._subscribed_depth:
-            asyncio.create_task(
-                self._connection.invoke("SubscribeContractMarketDepth", contract_id)
-            )
+            try:
+                await self._connection.invoke("SubscribeContractMarketDepth", contract_id)
+            except Exception as e:
+                logger.error(f"Error reconnecting market depth for {contract_id}: {e}")
 
     def _on_connected(self) -> None:
         """
@@ -389,4 +599,14 @@ class MarketHub:
         This restores all active subscriptions after a connection is established.
         """
         logger.info("Market hub connection established - restoring subscriptions")
-        self.reconnect_subscriptions()
+
+        # Create a task for the reconnection instead of calling it directly
+        asyncio.create_task(self._reconnect_and_log_errors())
+
+    async def _reconnect_and_log_errors(self) -> None:
+        """Reconnect subscriptions and log any errors."""
+        try:
+            await self.reconnect_subscriptions()
+            logger.info("Successfully reconnected all subscriptions")
+        except Exception as e:
+            logger.error(f"Error reconnecting subscriptions: {e}")

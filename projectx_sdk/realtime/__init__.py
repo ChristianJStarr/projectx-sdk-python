@@ -1,10 +1,15 @@
 """Real-time communication modules for ProjectX Gateway API."""
 
+import asyncio
+import logging
 from typing import Optional
 
 from projectx_sdk.realtime.connection import SignalRConnection
 from projectx_sdk.realtime.market_hub import MarketHub
 from projectx_sdk.realtime.user_hub import UserHub
+
+# Set up normal logging (removing the debug level override)
+logger = logging.getLogger(__name__)
 
 
 class RealTimeClient:
@@ -48,13 +53,28 @@ class RealTimeClient:
 
     async def start(self):
         """Start both real-time connections."""
-        await self._user_connection.start()
-        await self._market_connection.start()
+        try:
+            await self._user_connection.start()
+        except Exception as e:
+            # Log the error but continue to try to connect to the market hub
+            logger.error(f"Failed to start user connection: {str(e)}")
+
+        try:
+            await self._market_connection.start()
+        except Exception as e:
+            logger.error(f"Failed to start market connection: {str(e)}")
 
     async def stop(self):
         """Stop both real-time connections."""
-        await self._user_connection.stop()
-        await self._market_connection.stop()
+        try:
+            await self._user_connection.stop()
+        except Exception as e:
+            logger.error(f"Error stopping user connection: {str(e)}")
+
+        try:
+            await self._market_connection.stop()
+        except Exception as e:
+            logger.error(f"Error stopping market connection: {str(e)}")
 
     def is_connected(self) -> bool:
         """
@@ -75,7 +95,7 @@ class RealTimeClient:
         This is typically called after a connection is restored.
         """
         self.user.reconnect_subscriptions()
-        self.market.reconnect_subscriptions()
+        asyncio.create_task(self.market.reconnect_subscriptions())
 
 
 class RealtimeService:

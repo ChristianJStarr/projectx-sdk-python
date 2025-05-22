@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from projectx_sdk.realtime.connection import SignalRConnection
 
@@ -81,9 +81,9 @@ class UserHub:
 
         # Event callbacks
         self._account_callbacks: List[Callable] = []
-        self._order_callbacks: Dict[int, List[Callable]] = {}  # account_id -> [callbacks]
-        self._position_callbacks: Dict[int, List[Callable]] = {}
-        self._trade_callbacks: Dict[int, List[Callable]] = {}
+        self._order_callbacks: Dict[str, List[Any]] = {}  # account_id -> [callbacks]
+        self._position_callbacks: Dict[str, List[Any]] = {}
+        self._trade_callbacks: Dict[str, List[Any]] = {}
 
     def _register_handlers(self):
         """Register event handlers for the user hub."""
@@ -262,8 +262,8 @@ class UserHub:
         """
         if callback:
             if account_id not in self._order_callbacks:
-                self._order_callbacks[account_id] = []
-            self._order_callbacks[account_id].append(callback)
+                self._order_callbacks[str(account_id)] = []
+            self._order_callbacks[str(account_id)].append(callback)
 
         if self._is_connected:
             asyncio.create_task(self.invoke("SubscribeOrders", account_id))
@@ -301,8 +301,8 @@ class UserHub:
         """
         if callback:
             if account_id not in self._position_callbacks:
-                self._position_callbacks[account_id] = []
-            self._position_callbacks[account_id].append(callback)
+                self._position_callbacks[str(account_id)] = []
+            self._position_callbacks[str(account_id)].append(callback)
 
         if self._is_connected:
             asyncio.create_task(self.invoke("SubscribePositions", account_id))
@@ -340,8 +340,8 @@ class UserHub:
         """
         if callback:
             if account_id not in self._trade_callbacks:
-                self._trade_callbacks[account_id] = []
-            self._trade_callbacks[account_id].append(callback)
+                self._trade_callbacks[str(account_id)] = []
+            self._trade_callbacks[str(account_id)].append(callback)
 
         if self._is_connected:
             asyncio.create_task(self.invoke("SubscribeTrades", account_id))
@@ -388,80 +388,226 @@ class UserHub:
         Args:
             data: Account data from the hub event
         """
-        logger.debug(f"Received account update: {data}")
+        # Handle various types of input data
+        processed_data = data
+        try:
+            # Handle data if it's a string
+            if isinstance(data, str):
+                processed_data = {"accountId": data}
+            # Handle data if it's a list (from signalR direct invocation)
+            elif isinstance(data, list) and len(data) > 0:
+                if isinstance(data[0], str):
+                    processed_data = {"accountId": data[0]}
+                else:
+                    processed_data = data[0]
+        except Exception as e:
+            logger.error(f"Error processing account data: {e}")
+            return
 
         # Call all registered account callbacks
         for callback in self._account_callbacks:
             try:
-                callback(data)
+                callback(processed_data)
             except Exception as e:
                 logger.error(f"Error in account callback: {e}")
 
-    def _handle_order_update(self, data):
+    def _handle_order_update(self, data_or_account_id, data=None):
         """
         Handle order update events.
 
-        Args:
-            data: Order data from the hub event
-        """
-        logger.debug(f"Received order update: {data}")
+        This handler supports two invocation patterns:
+        1. _handle_order_update(data) - where data contains the account_id and order data
+        2. _handle_order_update(account_id, data) - where account_id is passed separately
 
-        # Extract account ID from the order data
-        account_id = data.get("accountId")
-        if not account_id:
-            logger.warning(f"Order update missing account ID: {data}")
-            return
+        Args:
+            data_or_account_id: Either the data dict or the account ID
+            data: Order data from the hub event (when using the second pattern)
+        """
+        # Determine which pattern we're using
+        if data is None:
+            # First pattern: data_or_account_id is the data object
+            # Process various data formats
+            account_id = None
+            order_data: Dict[str, Any] = {}
+
+            try:
+                # Handle string data
+                if isinstance(data_or_account_id, str):
+                    account_id = data_or_account_id
+                    order_data = {}
+                # Handle data if it's a list (from signalR direct invocation)
+                elif isinstance(data_or_account_id, list) and len(data_or_account_id) > 0:
+                    # SignalR direct format: [account_id, data_dict]
+                    if len(data_or_account_id) >= 2 and isinstance(data_or_account_id[0], str):
+                        account_id = data_or_account_id[0]
+                        order_data = data_or_account_id[1]
+                    else:
+                        item = data_or_account_id[0]
+                        if isinstance(item, str):
+                            account_id = item
+                        else:
+                            account_id = item.get("accountId")
+                            order_data = item
+                # Handle dictionary data
+                elif isinstance(data_or_account_id, dict):
+                    account_id = data_or_account_id.get("accountId")
+                    order_data = data_or_account_id
+                else:
+                    logger.warning("Order update has unrecognized format")
+                    return
+
+                if not account_id:
+                    logger.warning("Order update missing account ID")
+                    return
+            except Exception as e:
+                logger.error(f"Error processing order data: {e}")
+                return
+        else:
+            # Second pattern: data_or_account_id is the account_id
+            account_id = data_or_account_id
+            order_data = data
 
         # Call registered callbacks for this account
-        callbacks = self._order_callbacks.get(account_id, [])
+        if account_id is not None:
+            callbacks = self._order_callbacks.get(str(account_id), [])
+        else:
+            callbacks = []
         for callback in callbacks:
             try:
-                callback(data)
+                callback(account_id, order_data)
             except Exception as e:
                 logger.error(f"Error in order callback: {e}")
 
-    def _handle_position_update(self, data):
+    def _handle_position_update(self, data_or_account_id, data=None):
         """
         Handle position update events.
 
-        Args:
-            data: Position data from the hub event
-        """
-        logger.debug(f"Received position update: {data}")
+        This handler supports two invocation patterns:
+        1. _handle_position_update(data) - where data contains the account_id and position data
+        2. _handle_position_update(account_id, data) - where account_id is passed separately
 
-        # Extract account ID from the position data
-        account_id = data.get("accountId")
-        if not account_id:
-            logger.warning(f"Position update missing account ID: {data}")
-            return
+        Args:
+            data_or_account_id: Either the data dict or the account ID
+            data: Position data from the hub event (when using the second pattern)
+        """
+        # Determine which pattern we're using
+        if data is None:
+            # First pattern: data_or_account_id is the data object
+            # Process various data formats
+            account_id = None
+            position_data: Dict[str, Any] = {}
+
+            try:
+                # Handle string data
+                if isinstance(data_or_account_id, str):
+                    account_id = data_or_account_id
+                    position_data = {}
+                # Handle data if it's a list (from signalR direct invocation)
+                elif isinstance(data_or_account_id, list) and len(data_or_account_id) > 0:
+                    # SignalR direct format: [account_id, data_dict]
+                    if len(data_or_account_id) >= 2 and isinstance(data_or_account_id[0], str):
+                        account_id = data_or_account_id[0]
+                        position_data = data_or_account_id[1]
+                    else:
+                        item = data_or_account_id[0]
+                        if isinstance(item, str):
+                            account_id = item
+                        else:
+                            account_id = item.get("accountId")
+                            position_data = item
+                # Handle dictionary data
+                elif isinstance(data_or_account_id, dict):
+                    account_id = data_or_account_id.get("accountId")
+                    position_data = data_or_account_id
+                else:
+                    logger.warning("Position update has unrecognized format")
+                    return
+
+                if not account_id:
+                    logger.warning("Position update missing account ID")
+                    return
+            except Exception as e:
+                logger.error(f"Error processing position data: {e}")
+                return
+        else:
+            # Second pattern: data_or_account_id is the account_id
+            account_id = data_or_account_id
+            position_data = data
 
         # Call registered callbacks for this account
-        callbacks = self._position_callbacks.get(account_id, [])
+        if account_id is not None:
+            callbacks = self._position_callbacks.get(str(account_id), [])
+        else:
+            callbacks = []
         for callback in callbacks:
             try:
-                callback(data)
+                callback(account_id, position_data)
             except Exception as e:
                 logger.error(f"Error in position callback: {e}")
 
-    def _handle_trade_update(self, data):
+    def _handle_trade_update(self, data_or_account_id, data=None):
         """
         Handle trade update events.
 
-        Args:
-            data: Trade data from the hub event
-        """
-        logger.debug(f"Received trade update: {data}")
+        This handler supports two invocation patterns:
+        1. _handle_trade_update(data) - where data contains the account_id and trade data
+        2. _handle_trade_update(account_id, data) - where account_id is passed separately
 
-        # Extract account ID from the trade data
-        account_id = data.get("accountId")
-        if not account_id:
-            logger.warning(f"Trade update missing account ID: {data}")
-            return
+        Args:
+            data_or_account_id: Either the data dict or the account ID
+            data: Trade data from the hub event (when using the second pattern)
+        """
+        # Determine which pattern we're using
+        if data is None:
+            # First pattern: data_or_account_id is the data object
+            # Process various data formats
+            account_id = None
+            trade_data: Dict[str, Any] = {}
+
+            try:
+                # Handle string data
+                if isinstance(data_or_account_id, str):
+                    account_id = data_or_account_id
+                    trade_data = {}
+                # Handle data if it's a list (from signalR direct invocation)
+                elif isinstance(data_or_account_id, list) and len(data_or_account_id) > 0:
+                    # SignalR direct format: [account_id, data_dict]
+                    if len(data_or_account_id) >= 2 and isinstance(data_or_account_id[0], str):
+                        account_id = data_or_account_id[0]
+                        trade_data = data_or_account_id[1]
+                    else:
+                        item = data_or_account_id[0]
+                        if isinstance(item, str):
+                            account_id = item
+                        else:
+                            account_id = item.get("accountId")
+                            trade_data = item
+                # Handle dictionary data
+                elif isinstance(data_or_account_id, dict):
+                    account_id = data_or_account_id.get("accountId")
+                    trade_data = data_or_account_id
+                else:
+                    logger.warning("Trade update has unrecognized format")
+                    return
+
+                if not account_id:
+                    logger.warning("Trade update missing account ID")
+                    return
+            except Exception as e:
+                logger.error(f"Error processing trade data: {e}")
+                return
+        else:
+            # Second pattern: data_or_account_id is the account_id
+            account_id = data_or_account_id
+            trade_data = data
 
         # Call registered callbacks for this account
-        callbacks = self._trade_callbacks.get(account_id, [])
+        if account_id is not None:
+            callbacks = self._trade_callbacks.get(str(account_id), [])
+        else:
+            callbacks = []
         for callback in callbacks:
             try:
-                callback(data)
+                callback(account_id, trade_data)
             except Exception as e:
                 logger.error(f"Error in trade callback: {e}")

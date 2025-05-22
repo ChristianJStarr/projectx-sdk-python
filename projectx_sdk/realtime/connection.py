@@ -1,5 +1,6 @@
 """Base connection class for SignalR WebSockets."""
 
+import asyncio
 import logging
 import threading
 from abc import ABC, abstractmethod
@@ -148,7 +149,8 @@ class HubConnection(ABC):
         Args:
             error: The error object
         """
-        logger.error(f"Connection error: {str(error)}")
+        err_str = str(error)
+        logger.error(f"Connection error: {err_str}")
 
     @abstractmethod
     def _on_connected(self):
@@ -264,16 +266,30 @@ class SignalRConnection:
             # Set up handlers for connection events
             self._connection.on_open(self._on_connection_open)
             self._connection.on_close(self._on_connection_close)
-            self._connection.on_reconnecting(self._on_reconnecting)
-            self._connection.on_reconnected(self._on_reconnected)
             self._connection.on_error(self._on_error)
 
             # Register all existing event handlers
             self._register_handlers()
 
-            # Start the connection
-            await self._connection.start()
-            self._is_connected = True
+            # Start the connection - note: this returns a boolean, not a coroutine
+            # so we don't await it
+            result = self._connection.start()
+            if not result:
+                raise Exception("Failed to start SignalR connection")
+
+            # Wait for connection to be established with a timeout
+            max_wait_time = 30  # seconds
+            start_time = asyncio.get_event_loop().time()
+
+            while not self._is_connected:
+                # Check if we've exceeded the timeout
+                if asyncio.get_event_loop().time() - start_time > max_wait_time:
+                    self._connection.stop()
+                    raise TimeoutError(f"Connection timed out after {max_wait_time} seconds")
+
+                # Small sleep to avoid busy waiting
+                await asyncio.sleep(0.1)
+
             logger.info(f"SignalR connection established to {self.hub_url}")
 
         except Exception as e:
@@ -292,7 +308,13 @@ class SignalRConnection:
             return
 
         try:
-            await self._connection.stop()
+            # Stop the connection - note: this returns a boolean, not a coroutine
+            result = self._connection.stop()
+            if not result:
+                logger.warning("Failed to cleanly stop SignalR connection")
+
+            # Connection should be marked as closed by the on_close handler,
+            # but we'll set it here as well to be sure
             self._is_connected = False
             logger.info(f"SignalR connection closed to {self.hub_url}")
         except Exception as e:
@@ -348,9 +370,33 @@ class SignalRConnection:
             raise Exception("Not connected to SignalR hub")
 
         try:
-            return await self._connection.send(method, args)
+            # Log the raw args for debugging
+            logger.debug(f"Invoking hub method {method} with args: {args}")
+
+            # For signalrcore methods, we need to ensure arguments are in a list
+            # Convert single arguments to a list containing that argument
+            if len(args) == 1 and not isinstance(args[0], list):
+                # Single non-list argument, wrap it in a list
+                send_args = [args[0]]
+            elif len(args) > 1:
+                # Multiple arguments, put them all in a list
+                send_args = list(args)
+            else:
+                # Either empty args or a single list argument
+                send_args = args[0] if args and isinstance(args[0], list) else list(args)
+
+            logger.debug(f"Final args for {method}: {send_args}")
+
+            # Check if send is a coroutine function or a regular function
+            conn_send = self._connection.send
+            if asyncio.iscoroutinefunction(conn_send):
+                sent_result = await conn_send(method, send_args)
+                return sent_result
+            else:
+                return conn_send(method, send_args)
         except Exception as e:
-            logger.error(f"Error invoking hub method {method}: {str(e)}")
+            error_msg = f"Hub error: {method}"
+            logger.error(error_msg)
             raise e
 
     def _register_handlers(self):
@@ -362,59 +408,37 @@ class SignalRConnection:
 
     def _on_connection_open(self):
         """Handle connection open event."""
+        prev_state = self._is_connected
         self._is_connected = True
         logger.info(f"SignalR connection opened to {self.hub_url}")
+
+        # If we were previously connected and then reconnected, treat this as a reconnection
+        if prev_state is False and self._reconnecting:
+            with self._lock:
+                self._reconnecting = False
+
+            logger.info("SignalR connection reconnected")
+
+            # Re-register all handlers
+            self._register_handlers()
 
         # Call the connection callback if provided
         if self._connection_callback:
             try:
                 self._connection_callback()
             except Exception as e:
-                logger.error(f"Error in connection callback: {str(e)}")
+                logger.error("Error in connection callback: " + str(e))
 
     def _on_connection_close(self):
         """Handle connection close event."""
         self._is_connected = False
         logger.info(f"SignalR connection closed to {self.hub_url}")
 
-    def _on_reconnecting(self, error=None):
-        """
-        Handle reconnecting event.
-
-        Args:
-            error: The error that caused the reconnection attempt
-        """
+        # Handle reconnecting state here in absence of on_reconnecting/on_reconnected events
         with self._lock:
             self._reconnecting = True
-            self._is_connected = False
 
-        if error:
-            logger.warning(f"SignalR connection reconnecting due to error: {str(error)}")
-        else:
-            logger.info("SignalR connection reconnecting")
-
-    def _on_reconnected(self, connection_id=None):
-        """
-        Handle reconnected event.
-
-        Args:
-            connection_id: The new connection ID
-        """
-        with self._lock:
-            self._reconnecting = False
-            self._is_connected = True
-
-        logger.info(f"SignalR connection reconnected with ID: {connection_id}")
-
-        # Re-register all handlers
-        self._register_handlers()
-
-        # Call the connection callback if provided
-        if self._connection_callback:
-            try:
-                self._connection_callback()
-            except Exception as e:
-                logger.error(f"Error in connection callback: {str(e)}")
+        logger.info("SignalR connection reconnecting")
 
     def _on_error(self, error):
         """
@@ -423,4 +447,5 @@ class SignalRConnection:
         Args:
             error: The error object
         """
-        logger.error(f"SignalR connection error: {str(error)}")
+        err_str = str(error)
+        logger.error(f"SignalR connection error: {err_str}")
