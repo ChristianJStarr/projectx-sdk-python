@@ -7,6 +7,7 @@ A Python client library for the ProjectX Gateway API, enabling proprietary tradi
 [![Python Tests](https://github.com/ChristianJStarr/projectx-sdk-python/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/ChristianJStarr/projectx-sdk-python/actions/workflows/tests.yml)
 [![PyPI version](https://badge.fury.io/py/projectx-sdk.svg)](https://badge.fury.io/py/projectx-sdk)
 [![Python Version](https://img.shields.io/pypi/pyversions/projectx-sdk.svg)](https://pypi.org/project/projectx-sdk/)
+[![PyPI Downloads](https://static.pepy.tech/badge/projectx-sdk/month)](https://pepy.tech/projects/projectx-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
