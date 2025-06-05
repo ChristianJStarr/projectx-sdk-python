@@ -20,7 +20,7 @@ from projectx_sdk.exceptions import (
     RequestError,
     ResourceNotFoundError,
 )
-from projectx_sdk.realtime import RealTimeClient
+from projectx_sdk.realtime import SyncRealTimeClient
 
 logger = logging.getLogger(__name__)
 
@@ -156,10 +156,10 @@ class ProjectXClient:
         self.trades = TradeService(self)
 
         # Real-time client (lazy-initialized)
-        self._realtime: Optional[RealTimeClient] = None
+        self._realtime: Optional[SyncRealTimeClient] = None
 
     @property
-    def realtime(self) -> RealTimeClient:
+    def realtime(self) -> SyncRealTimeClient:
         """
         Get the real-time client for WebSocket connections.
 
@@ -170,7 +170,7 @@ class ProjectXClient:
         """
         if not self._realtime:
             token = self.auth.get_token()
-            self._realtime = RealTimeClient(
+            self._realtime = SyncRealTimeClient(
                 auth_token=token,
                 environment=self.environment,
                 user_hub_url=self.USER_HUB_URLS.get(self.environment),

@@ -1,6 +1,8 @@
 """Example demonstrating real-time market data streaming with the ProjectX SDK."""
 
 import os
+import signal
+import sys
 import threading
 import time
 from collections import deque
@@ -12,6 +14,28 @@ from projectx_sdk import ProjectXClient
 USERNAME = os.environ.get("PROJECTX_USERNAME")
 API_KEY = os.environ.get("PROJECTX_API_KEY")
 ENVIRONMENT = os.environ.get("PROJECTX_ENVIRONMENT", "demo")
+
+# Global variables for graceful shutdown
+shutdown_requested = False
+client = None
+monitor = None
+
+
+def signal_handler(signum, frame):
+    """Handle shutdown signals gracefully."""
+    global shutdown_requested, client, monitor
+    print("\nShutdown signal received. Cleaning up...")
+    shutdown_requested = True
+
+    if monitor:
+        monitor.stop()
+    if client:
+        try:
+            client.realtime.stop()
+        except Exception as e:
+            print(f"Error during cleanup: {e}")
+
+    sys.exit(0)
 
 
 class MarketDataMonitor:
@@ -34,9 +58,9 @@ class MarketDataMonitor:
         self.display_thread.daemon = True
         self.display_thread.start()
 
-    def on_price_update(self, data):
+    def on_quote_update(self, contract_id, data):
         """Handle real-time price updates."""
-        contract_id = data.get("contractId")
+        print(f"Quote update for {contract_id}: {data}")
         if not contract_id or contract_id not in self.subscribed_contracts:
             return
 
@@ -47,16 +71,16 @@ class MarketDataMonitor:
             timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
             price_data = {
                 "timestamp": timestamp,
-                "last": data.get("last"),
-                "bid": data.get("bid"),
-                "ask": data.get("ask"),
+                "last": data.get("lastPrice"),  # Field mapping: lastPrice -> last
+                "bid": data.get("bestBid"),  # Field mapping: bestBid -> bid
+                "ask": data.get("bestAsk"),  # Field mapping: bestAsk -> ask
                 "volume": data.get("volume"),
             }
             self.price_history[contract_id].append(price_data)
+            print(f"Processed price data: {price_data}")
 
-    def on_trade_update(self, data):
+    def on_trade_update(self, contract_id, data):
         """Handle real-time trade updates."""
-        contract_id = data.get("contractId")
         if not contract_id or contract_id not in self.subscribed_contracts:
             return
 
@@ -64,9 +88,25 @@ class MarketDataMonitor:
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
 
         print(f"\n[{timestamp}] TRADE: {contract_name}")
-        print(f"  Price: {data.get('price')}")
-        print(f"  Size: {data.get('size')}")
-        print(f"  Side: {data.get('side')}")
+        print(f"  Trade data type: {type(data)}")
+        print(f"  Trade data: {data}")
+
+        # Handle case where data might be a list or dict
+        try:
+            if isinstance(data, list):
+                print(f"  Data is a list with {len(data)} items")
+                # If data is a list, take the first item or handle accordingly
+                trade_data = data[0] if data else {}
+                print(f"  Using first item: {trade_data}")
+            else:
+                trade_data = data
+
+            print(f"  Price: {trade_data.get('price', 'N/A')}")
+            print(f"  Size: {trade_data.get('size', 'N/A')}")
+            print(f"  Side: {trade_data.get('side', 'N/A')}")
+        except Exception as e:
+            print(f"  Error processing trade data: {e}")
+            print(f"  Raw data: {data}")
 
     def subscribe_contract(self, contract):
         """Subscribe to real-time data for a contract."""
@@ -80,14 +120,16 @@ class MarketDataMonitor:
             self.price_history[contract_id] = deque(maxlen=100)
 
         # Subscribe to price updates
-        self.client.realtime.market.subscribe_prices(
-            contract_id=contract_id, callback=self.on_price_update
+        self.client.realtime.market.subscribe_quotes(
+            contract_id=contract_id, callback=self.on_quote_update
         )
+        print("subscribed to quotes")
 
         # Subscribe to trade updates
         self.client.realtime.market.subscribe_trades(
             contract_id=contract_id, callback=self.on_trade_update
         )
+        print("subscribed to trades")
 
         print(f"Subscribed to real-time data for {contract.name}")
 
@@ -133,6 +175,12 @@ class MarketDataMonitor:
 
 def stream_market_data():
     """Stream real-time market data for selected contracts."""
+    global client, monitor
+
+    # Set up signal handling for graceful shutdown
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     # Initialize the client
     print(f"Connecting to ProjectX {ENVIRONMENT} environment...")
     client = ProjectXClient(username=USERNAME, api_key=API_KEY, environment=ENVIRONMENT)
@@ -192,15 +240,24 @@ def stream_market_data():
         # Main loop to keep the script running
         print("\nStreaming real-time market data. Press Ctrl+C to exit.")
 
-        while True:
+        while not shutdown_requested:
             time.sleep(0.1)
 
     except KeyboardInterrupt:
-        print("\nExiting...")
+        print("\nKeyboard interrupt received...")
+    except Exception as e:
+        print(f"\nUnexpected error: {e}")
     finally:
-        # Clean up
-        monitor.stop()
-        client.realtime.stop()
+        # Clean up (signal handler may have already done this)
+        print("Final cleanup...")
+        if monitor:
+            monitor.stop()
+        if client:
+            try:
+                client.realtime.stop()
+                print("Real-time client stopped successfully")
+            except Exception as e:
+                print(f"Error stopping real-time client: {e}")
 
 
 if __name__ == "__main__":

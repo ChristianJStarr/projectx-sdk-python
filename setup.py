@@ -37,7 +37,7 @@ dev_requires = [
 
 setup(
     name="projectx-sdk",
-    version="0.2.13",
+    version="0.2.2",
     author="Christian Starr",
     author_email="christianjstarr@icloud.com",
     description="UnofficialPython SDK for the ProjectX Gateway API",

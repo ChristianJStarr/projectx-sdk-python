@@ -311,14 +311,19 @@ class SignalRConnection:
             # Stop the connection - note: this returns a boolean, not a coroutine
             result = self._connection.stop()
             if not result:
-                logger.warning("Failed to cleanly stop SignalR connection")
+                # This might be normal behavior for some SignalR implementations
+                logger.debug("SignalR connection stop returned False (may be normal)")
+            else:
+                logger.debug("SignalR connection stop returned True")
 
             # Connection should be marked as closed by the on_close handler,
             # but we'll set it here as well to be sure
             self._is_connected = False
             logger.info(f"SignalR connection closed to {self.hub_url}")
         except Exception as e:
-            logger.error(f"Error stopping SignalR connection: {str(e)}")
+            logger.warning(f"Exception during SignalR connection stop: {str(e)}")
+            # Still mark as disconnected since we tried to stop it
+            self._is_connected = False
 
     def is_connected(self):
         """
